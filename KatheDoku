@@ -1,0 +1,123 @@
+#include <iostream>
+#include <random> //libreria para numeros aleatorios
+using namespace std;
+
+const int TAMANO = 9;
+const int valor_nulo = 0;
+
+
+//funcion  para hacer y mostrar el tablero
+void imprimirTablero(int tablero[TAMANO][TAMANO]) {
+    for (int f = 0; f < TAMANO; f++) { //f para fila
+        for (int c = 0; c < TAMANO; c++) {  //c para columna
+            cout << tablero[f][c] << " ";
+        }
+        cout << endl;  
+    cout << endl; 
+    }
+}
+
+bool esValido(int tablero[TAMANO][TAMANO], int f, int c, int num) {
+    // Verificar las filas y columnas
+    for (int x = 0; x < TAMANO; x++) {
+        if (tablero[f][x] == num || tablero[x][c] == num) { //veificar que el numero no este en la misma fila ni en la mism columna
+            return false;
+        }
+    }
+    int fila = f - f % 3, columna = c - c % 3;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (tablero[i + fila][j + columna] == num) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+bool ubicacionVacia(int tablero[TAMANO][TAMANO], int& f, int& c) { //encontrar celda vacia
+    for (f = 0; f < TAMANO; f++) {
+        for (c = 0; c < TAMANO; c++) {
+            if (tablero[f][c] == valor_nulo) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool resolverKathedoku(int tablero[TAMANO][TAMANO]) {
+    int f, c;
+    if (!ubicacionVacia(tablero, f, c)) {
+        return true;  // KATHEDOKU resuelto
+    }
+
+    for (int num = 1; num <= 9; num++) {
+        if (esValido(tablero, f, c, num)) {
+            tablero[f][c] = num; 
+
+            if (resolverKathedoku(tablero)) {
+                return true;  
+            }
+
+            tablero[f][c] = valor_nulo;  
+        }
+    }
+    return false; 
+}
+
+void cajas(int tablero[TAMANO][TAMANO], std::mt19937& generador) {
+    for (int i = 0; i < TAMANO; i += 3) {
+        int numeros[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+        for (int j = 0; j < 9; j++) {
+            std::uniform_int_distribution<int> distribution(0, j); //se establece el tipo de numero y el rango del mismo
+            int n = distribution(generador); //llama a la distribucion
+            std::swap(numeros[n], numeros[j]); //se mezclan numeros entre los dos arreglos
+        }
+
+        for (int j = 0; j < 3; j++) {     
+            for (int n = 0; n < 3; n++) {
+                tablero[i + j][(i / 3) * 3 + n] = numeros[j * 3 + n];
+            }
+        }
+    }
+}
+
+void eliminarNum(int tablero[TAMANO][TAMANO], int pistas, std::mt19937& generador) {
+    for (int i = 0; i < pistas; i++) {
+        int f, c;
+        do {
+            f = generador() % TAMANO;
+            c = generador() % TAMANO;
+        } while (tablero[f][c] == valor_nulo);
+        tablero[f][c] = valor_nulo;  
+    }
+}
+
+void KATHEDOKU(int tablero[TAMANO][TAMANO], int pistas) {
+    std::random_device rd;
+    std::mt19937 generador(rd());
+
+    cajas(tablero, generador);
+    resolverKathedoku(tablero);  
+    eliminarNum(tablero, pistas, generador);
+}
+
+int main() {
+    int tablero[TAMANO][TAMANO] = {valor_nulo};
+    int pistas = 10;
+
+    KATHEDOKU(tablero, pistas);
+    cout << "KATHEDOKU:" << endl;
+    imprimirTablero(tablero);
+
+    if (resolverKathedoku(tablero)) {
+        cout << "Solucion del KATHEDOKU :D" << endl;
+        imprimirTablero(tablero);
+    } else {
+        cout << "No se ha podido resolver el KATHEDOKU :c" << endl;
+    }
+    return 0;
+}
